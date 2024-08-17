@@ -7,22 +7,22 @@ import {twMerge} from "tailwind-merge";
 
 function App() {
     const [pageData, setPageData] = useState([
-        {key: 0, page: '0000', quadro: '---', validade: 0, historico: '0000'},
-        {key: 1, page: '0001', quadro: '---', validade: 0, historico: '0000'},
-        {key: 2, page: '0010', quadro: '---', validade: 0, historico: '0000'},
-        {key: 3, page: '0011', quadro: '---', validade: 0, historico: '0000'},
-        {key: 4, page: '0100', quadro: '---', validade: 0, historico: '0000'},
-        {key: 5, page: '0101', quadro: '---', validade: 0, historico: '0000'},
-        {key: 6, page: '0110', quadro: '---', validade: 0, historico: '0000'},
-        {key: 7, page: '0111', quadro: '---', validade: 0, historico: '0000'},
-        {key: 8, page: '1000', quadro: '---', validade: 0, historico: '0000'},
-        {key: 9, page: '1001', quadro: '---', validade: 0, historico: '0000'},
-        {key: 10, page: '1010', quadro: '---', validade: 0, historico: '0000'},
-        {key: 11, page: '1011', quadro: '---', validade: 0, historico: '0000'},
-        {key: 12, page: '1100', quadro: '---', validade: 0, historico: '0000'},
-        {key: 13, page: '1101', quadro: '---', validade: 0, historico: '0000'},
-        {key: 14, page: '1110', quadro: '---', validade: 0, historico: '0000'},
-        {key: 15, page: '1111', quadro: '---', validade: 0, historico: '0000'}
+        {key: 0, page: '0000', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 1, page: '0001', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 2, page: '0010', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 3, page: '0011', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 4, page: '0100', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 5, page: '0101', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 6, page: '0110', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 7, page: '0111', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 8, page: '1000', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 9, page: '1001', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 10, page: '1010', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 11, page: '1011', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 12, page: '1100', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 13, page: '1101', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 14, page: '1110', quadro: '---', validade: 0, historico: '00000000'},
+        {key: 15, page: '1111', quadro: '---', validade: 0, historico: '00000000'}
     ])
 
     const [memoryData, setMemoryData] = useState([
@@ -94,19 +94,19 @@ function App() {
 
             let newPageData = pageData.filter(it => it.key !== selectedPage.key).map(it => ({
                 ...it,
-                historico: '0' + it.historico.substring(0, 3)
+                historico: '0' + it.historico.substring(0, 7)
             }))
 
             if (quadroVitima) {
                 newPageData = newPageData.filter(it => it.key !== quadroVitima.key)
-                quadroVitima = {...quadroVitima, historico: '0' + quadroVitima.historico.substring(0, 3)}
+                quadroVitima = {...quadroVitima, historico: '0' + quadroVitima.historico.substring(0, 7)}
             }
 
             const updatedRow = {
                 ...selectedPage,
                 quadro: selectedMemory?.quadro ?? selectedPage?.quadro,
                 validade: 1,
-                historico: '1' + selectedPage.historico.substring(0, 3)
+                historico: '1' + selectedPage.historico.substring(0, 7)
             }
 
             setMemoryDataRow(memoryData.find(it => (it.quadro === selectedPage?.quadro) || it.quadro === selectedMemory?.quadro))
