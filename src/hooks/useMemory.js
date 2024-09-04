@@ -19,7 +19,6 @@ export const useMemory = () => {
         {key: 14, page: '1110', quadro: '---', validade: 0, historico: '00000000'},
         {key: 15, page: '1111', quadro: '---', validade: 0, historico: '00000000'}
     ])
-
     const [memoryData, setMemoryData] = useState([
         {key: '0', quadro: '000', livre: true},
         {key: '1', quadro: '001', livre: true},
@@ -31,12 +30,18 @@ export const useMemory = () => {
         {key: '7', quadro: '111', livre: true},
     ])
 
+    const words = ['0000', '0001', '0010', '0011', '0100', '0101', '0110', '0111', '1000', '1001', '1010', '1011', '1100', '1101', '1110', '1111']
+
     const [page, setPage] = useState()
-    const [tablePageRow, setTablePageRow] = useState()
-    const [memoryDataRow, setMemoryDataRow] = useState()
     const [shift, setShift] = useState()
+    const [logicAdr, setLogicAdr] = useState('')
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-    const [updateMemory, setUpdateMemory] = useState(false)
+    const [pageFault, setPageFault] = useState(false)
+    const [steps, setSteps] = useState([])
+    const [actualStep, setActualStep] = useState(0)
+    const [pageToUpdate, setPageToUpdate] = useState()
+    const [selectedMemory, setSelectedMemory] = useState()
+    const [victimPage, setVictimPage] = useState()
 
     useEffect(() => {
         const handleResize = () => setScreenWidth(window.innerWidth);
@@ -46,13 +51,14 @@ export const useMemory = () => {
 
     const handleUpdateLogicalAddres = (event) => {
         const logicAdr = event.target.value
+        setLogicAdr(logicAdr)
         if (logicAdr.length === 8) {
             setPage(logicAdr.slice(0, 4))
             setShift(logicAdr.slice(4, 8))
         } else {
             setPage(null)
             setShift(null)
-            setUpdateMemory(false)
+            setPageFault(false)
         }
     }
 
@@ -63,68 +69,205 @@ export const useMemory = () => {
         return filteredPageData[0]
     }
 
-    useEffect(() => {
-        if (page) {
-            const selectedPage = pageData.find(it => it.page === page)
-            let selectedMemory;
-            let quadroVitima;
+    const handleNextStep = () => {
+        const step = steps[actualStep]
+        const updateHistory = step?.updateHistory
+        const updatePage = step?.updatePage
+        const updateMemory = step?.updateMemory
+        const updateVictim = step?.updateVictim
+        const showPhysicAdr = step?.finalStep
 
-            if (selectedPage?.quadro === '---' || selectedPage.validade === 0) {
-                setUpdateMemory(true)
-                const mem = memoryData.find(it => it.livre)
-                selectedMemory = {...mem, livre: false}
-
-                if (!mem) {
-                    const victim = selectVictim()
-                    quadroVitima = {...victim, validade: 0}
-                    selectedMemory = memoryData.find(it => it.quadro === victim.quadro);
-                }
-
-                const updatedMemory = memoryData.filter(it => it.key !== selectedMemory.key)
-                const newMemory = [...updatedMemory, selectedMemory].sort((a, b) => a.key - b.key);
-                setMemoryData(newMemory)
-            } else {
-                setUpdateMemory(false)
-            }
-
-            let newPageData = pageData.filter(it => it.key !== selectedPage.key).map(it => ({
+        if (updateHistory) {
+            const newPageData = pageData.map(it => ({
                 ...it,
-                historico: '0' + it.historico.substring(0, 7)
+                historico: (it.key === pageToUpdate.key ? '1' : '0') + it.historico.substring(0, 7)
             }))
 
-            if (quadroVitima) {
-                newPageData = newPageData.filter(it => it.key !== quadroVitima.key)
-                quadroVitima = {...quadroVitima, historico: '0' + quadroVitima.historico.substring(0, 7)}
-            }
-
-            const updatedRow = {
-                ...selectedPage,
-                quadro: selectedMemory?.quadro ?? selectedPage?.quadro,
-                validade: 1,
-                historico: '1' + selectedPage.historico.substring(0, 7)
-            }
-
-            setMemoryDataRow(memoryData.find(it => (it.quadro === selectedPage?.quadro) || it.quadro === selectedMemory?.quadro))
-            let a = [];
-            if (quadroVitima) {
-                a = [...newPageData, updatedRow, quadroVitima].sort((a, b) => a.key - b.key);
-            } else {
-                a = [...newPageData, updatedRow].sort((a, b) => a.key - b.key);
-            }
-            setPageData(a)
-            setTablePageRow(selectedPage)
+            setPageData(newPageData)
+        } else if (updatePage) {
+            const newPageData = pageData.filter(it => it.key !== pageToUpdate.key)
+            newPageData.push({
+                ...pageToUpdate,
+                quadro: selectedMemory.quadro,
+                validade: 1
+            })
+            setPageData(newPageData.sort((a, b) => a.key - b.key))
+        } else if (updateVictim) {
+            const updatedVictim = {...victimPage, validade: 0}
+            const newPageData = pageData.filter(it => it.key !== victimPage.key)
+            newPageData.push(updatedVictim)
+            setPageData(newPageData.sort((a, b) => a.key - b.key))
+        } else if (selectedMemory && updateMemory) {
+            let newMemoryData = memoryData.filter(it => it.key !== selectedMemory.key);
+            newMemoryData.push({...selectedMemory, livre: false})
+            newMemoryData = newMemoryData.sort((a, b) => a.key - b.key)
+            setMemoryData([...newMemoryData])
         }
+
+        if (showPhysicAdr) {
+            setLogicAdr('')
+            setSteps([])
+            setActualStep(0)
+            setVictimPage(null)
+            setPageToUpdate(null)
+            setSelectedMemory(null)
+        } else {
+            setActualStep(actualStep + 1)
+        }
+    }
+
+    const handlePreviousStep = () => {
+        const step = steps[actualStep]
+        const updatePage = step?.updatePage
+        const updateMemory = step?.updateMemory
+        const updateVictim = step?.updateVictim
+
+        if (updatePage) {
+            const newPageData = pageData.filter(it => it.key !== pageToUpdate.key)
+            newPageData.push(pageToUpdate)
+            setPageData(newPageData.sort((a, b) => a.key - b.key))
+        } else if (updateVictim) {
+            const newPageData = pageData.filter(it => it.key !== victimPage.key)
+            newPageData.push(victimPage)
+            setPageData(newPageData.sort((a, b) => a.key - b.key))
+        } else if (selectedMemory && updateMemory) {
+            let newMemoryData = memoryData.filter(it => it.key !== selectedMemory.key);
+            newMemoryData.push(selectedMemory)
+            newMemoryData = newMemoryData.sort((a, b) => a.key - b.key)
+            setMemoryData([...newMemoryData])
+        }
+
+        setActualStep(actualStep - 1)
+    }
+
+    useEffect(() => {
+        setActualStep(0)
+        const steps = []
+        if (page) {
+            const selectedPage = pageData.find(it => it.page === page)
+            const freeMemoryCell = memoryData.find(it => it.livre)
+            const victimPage = selectVictim()
+
+            steps.push({
+                text: 'A partir do endereço lógico realiza-se a busca na tabela de páginas para verificar se ela está na memória principal.',
+                arrows: {page: true},
+            })
+
+            if (selectedPage?.quadro === '---' && freeMemoryCell) {
+                setSelectedMemory(freeMemoryCell)
+                steps.push(...[{
+                    text: 'A página não se encontra na memoria, visto que o bit de validade do registro na tabela de páginas é 0',
+                    arrows: {page: true},
+                }, {
+                    text: 'Dessa forma, é necessário busca-lá na memória principal.',
+                    arrows: {page: true},
+                    pageFault: true,
+                }
+                ])
+            } else if (!selectedPage.validade) {
+                setVictimPage(victimPage)
+                const memoryToUpdate = memoryData.find(it => it.quadro === victimPage.quadro)
+                setSelectedMemory(memoryToUpdate)
+
+                steps.push(...[{
+                    text: 'Como todas as células da memória principal encontram-se ocupadas, deve-se encontrar um quadro vítima para alocar a nova página na memória.',
+                    arrows: {page: true},
+                    pageFault: true,
+                }, {
+                    text: 'Para isso, deve-se selecionar a página menos utilizada recentemente com base no histórico dela.',
+                    arrows: {page: true},
+                    pageFault: true,
+                }, {
+                    text: `Nesse caso, a página ${victimPage.page} foi a escolhida, com histórico ${victimPage.historico}`,
+                    arrows: {page: true},
+                    pageFault: true,
+                }, {
+                    text: `Com a página vítima definida, atualiza-se o bit de validade dela.`,
+                    arrows: {page: true},
+                    pageFault: true,
+                    updateVictim: true
+                }])
+            } else {
+                const selectedMemory = memoryData.find(it => it.quadro === selectedPage.quadro)
+                setSelectedMemory(selectedMemory)
+            }
+            if (!selectedPage.validade) {
+                steps.push(...[{
+                    text: 'Após isso, deve-se atualiza a página indicando em qual quadro ela está localizada, bem como o seu bit de validade.',
+                    arrows: {page: true},
+                    pageFault: true,
+                    updatePage: true,
+                }, {
+                    text: 'Deve-se atualizar também a memória secundária.',
+                    arrows: {page: true},
+                    pageFault: true,
+                    updateMemory: true,
+                }])
+            } else {
+                steps.push({
+                    text: 'Como a página encontra-se na tabela de páginas basta busca-la, de maneira direta, na memória principal a partir do quadro indicado.',
+                    arrows: {page: true, history: true, physic: true},
+                    pageFault: !selectedPage.validade,
+                    showPhysicAdr: true
+                })
+            }
+
+            steps.push({
+                text: 'Após isso, deve-se atualizar o histórico de cada página, registrando o quão frequente o seu uso tem sido.',
+                arrows: {page: true, history: Boolean(selectedPage.validade), physic: Boolean(selectedPage.validade)},
+                pageFault: !selectedPage.validade,
+                updateHistory: true,
+                showPhysicAdr: Boolean(selectedPage.validade)
+            })
+
+            steps.push({
+                text: 'Por fim, torna-se possível montar o endereço físico final.',
+                arrows: {page: true, history: true, physic: true},
+                pageFault: !selectedPage.validade,
+                showPhysicAdr: true,
+                finalStep: true
+            })
+
+            setPageToUpdate(selectedPage)
+        }
+        setSteps(steps)
+
     }, [page]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const element = document.getElementById('stepControl');
+            const offset = window.pageYOffset;
+            element.style.transform = `translateY(${offset}px)`;
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    const showPhysicAdr = steps[actualStep]?.showPhysicAdr && selectedMemory
+    const physicAdr = showPhysicAdr ? `${selectedMemory?.quadro}${shift}` : ''
+
 
     return {
         pageData,
         page,
+        logicAdr,
         memoryData,
-        memoryDataRow,
+        memoryToUpdate: selectedMemory,
         handleUpdateLogicalAddres,
         shift,
         screenWidth,
-        tablePageRow,
-        updateMemory
+        pageToUpdate,
+        pageFault,
+        steps,
+        actualStep,
+        handleNextStep,
+        handlePreviousStep,
+        physicAdr,
+        words,
     }
 }

@@ -1,14 +1,14 @@
 import {
-    Grid,
-    TextField,
-    Typography,
+    Button,
+    Grid2,
+    Paper,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableRow,
-    Paper,
-    Grid2
+    TextField,
+    Typography
 } from "@mui/material";
 import {twMerge} from "tailwind-merge";
 import Xarrow from "react-xarrows";
@@ -24,27 +24,52 @@ export const Memory = () => {
         pageData,
         page,
         memoryData,
-        memoryDataRow,
+        memoryToUpdate,
         handleUpdateLogicalAddres,
-        shift,
         screenWidth,
-        updateMemory,
-        tablePageRow
+        logicAdr,
+        pageToUpdate,
+        steps,
+        actualStep,
+        handleNextStep,
+        handlePreviousStep,
+        physicAdr,
+        words,
+        shift
     } = useMemory();
 
     return (
-        <Grid2 container className='mx-10'>
+        <Grid2 justifyContent='center' container className='mx-10 space-y-3' spacing={10}>
+            <Grid2 id='stepControl' size={{xs: 12, md: 4}} item
+                   className="space-y-3 z-10 bg-[#fff] w-[200px] h-[20px] mt-1">
+                <Grid2 item>
+                    <div className="w-full bg-[#fff]">
+                        <Typography className='pr-2' id='physic-adr-label'>Status:</Typography>
+                        {steps.length > 0 && steps[actualStep]?.text}
+                    </div>
+                    <div className='flex flex-row justify-between bg-[#fff]'>
+                        <Button disabled={actualStep === 0} onClick={handlePreviousStep} variant="contained"
+                                size='smaill'
+                                sx={{textTransform: "none"}}>Voltar</Button>
+                        <Button disabled={steps.length === 0 || actualStep === steps.length} onClick={handleNextStep}
+                                variant="contained" size='smaill'
+                                sx={{textTransform: "none"}}>Avançar</Button>
+                    </div>
+                </Grid2>
+            </Grid2>
             <Grid2 item className="space-y-3">
                 <Grid2 item size={6} display="flex" justifyContent="center" alignItems="center">
-                    <div className="w-full">
+                    <div className="w-full z-0">
                         <Typography className='pr-2'>Endereço lógico:</Typography>
                         <TextField
+                            disabled={steps.length > 0}
                             onKeyPress={(event) => {
                                 if (!/[01]/.test(event.key)) {
                                     event.preventDefault();
                                 }
                             }}
                             onChange={handleUpdateLogicalAddres}
+                            value={logicAdr}
                             inputProps={{maxLength: 8}}
                             id='logic-adr'
                             className='w-full'
@@ -65,12 +90,12 @@ export const Memory = () => {
                             <TableBody>
                                 {pageData.map(it => (
                                     <TableRow id={`page-${it.key}`} key={it.key}>
-                                        <TableCell className='text-center'>{it.page}</TableCell>
-                                        <TableCell className='text-center'>{it.quadro}</TableCell>
+                                        <TableCell align='center'>{it.page}</TableCell>
+                                        <TableCell align='center'>{it.quadro}</TableCell>
                                         <TableCell id={`valid-${it.key}`}
-                                                   className='text-center'>{it.validade}</TableCell>
+                                                   align='center'>{it.validade}</TableCell>
                                         <TableCell id={`historico-${it.key}`}
-                                                   className='text-center'>{it.historico}</TableCell>
+                                                   align='center'>{it.historico}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -78,21 +103,19 @@ export const Memory = () => {
                     </Paper>
                 </Grid2>
             </Grid2>
-            <Grid item container direction="column" alignItems="center">
-                {/*
-
-<Grid2 item display="flex"  justifyContent="center" size={6}>
-                    <div>
+            <Grid2 item className="space-y-3">
+                <Grid2 item size={6} display="flex" justifyContent="center" alignItems="center">
+                    <div className="w-full">
                         <Typography className='pr-2' id='physic-adr-label'>Endereço físico:</Typography>
                         <TextField
                             disabled
-                            value={shift ? `${memoryDataRow?.quadro}${shift}` : ''}
+                            value={physicAdr}
                             id='physic-adr'
                             className='w-[250px]'
                         />
                     </div>
                 </Grid2>
-                <Grid item>
+                <Grid2 item>
                     <Paper elevation={3}>
                         <Table id='memory'>
                             <TableHead>
@@ -100,53 +123,70 @@ export const Memory = () => {
                                     <TableCell>Decimal</TableCell>
                                     <TableCell>Quadro</TableCell>
                                     <TableCell>Livre</TableCell>
+                                    <TableCell>Delocamento</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {memoryData.map(it => (
                                     <TableRow key={it.key}>
-                                        <TableCell id={`memory-${it.key}`} className='text-center'>{it.key}</TableCell>
-                                        <TableCell id={`quadro-${it.key}`} className='text-center'>{it.quadro}</TableCell>
-                                        <TableCell id={`free-${it.key}`} className={twMerge(it.livre ? 'text-green-700' : 'text-red-700', 'text-center')}>{it.livre ? 'Sim' : 'Não'}</TableCell>
+                                        <TableCell  id={`memory-${it.key}`} align='center'>{it.key}</TableCell>
+                                        <TableCell  id={`quadro-${it.key}`} align='center'>{it.quadro}</TableCell>
+                                        <TableCell  id={`free-${it.key}`}
+                                        >
+                                            <p className={twMerge(it.livre ? 'text-green-700' : 'text-red-700', 'text-center')}>{it.livre ? 'Sim' : 'Não'}</p>
+                                        </TableCell>
+                                        <TableCell>
+                                            {words.map(it => <p  id={`word-${it}`} className='text-xs text-center'>{it}</p>)}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </Paper>
-                </Grid>
-
-                <Grid item className='mt-20'>
+                </Grid2>
+                <Grid2 item>
                     <Paper elevation={3}>
                         <Table id='disc'>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell colSpan={2}>Disco</TableCell>
+                                    <TableCell align='center' colSpan={2}>Disco</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {memoryData.map(it => (
                                     <TableRow key={it.key}>
-                                        <TableCell className='text-center'>--</TableCell>
-                                        <TableCell id={`disc-${it.key}`} className='text-center'>---</TableCell>
+                                        <TableCell align='center'>--</TableCell>
+                                        <TableCell id={`disc-${it.key}`} align='center'>---</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </Paper>
-                </Grid>*/}
-            </Grid>
+                </Grid2>
+            </Grid2>
+
 
             {page && <>
-                {/*<Xarrow start={'logic-adr'} end="physic-adr" />
-                */}<Xarrow start={'logic-adr'} end={`page-${tablePageRow?.key}`} startAnchor={'left'} endAnchor={"left"}
-                           path={"grid"} gridBreak='10%30' headShape={rightArrow}/>
-                {/*<Xarrow start={`historico-${tablePageRow?.key}`} end={screenWidth <= 1044 ? 'physic-adr' : 'physic-adr-label'} endAnchor={screenWidth <= 1044 ? 'right' : 'bottom'} path={screenWidth <= 1044 ? "grid" : 'smooth'} gridBreak='-10' startAnchor='right' />
-                <Xarrow start={screenWidth <= 1044 ? 'physic-adr-label' : 'physic-adr'} end={screenWidth <= 1044 ? `memory-${memoryDataRow?.key}` : `free-${memoryDataRow?.key}`} endAnchor={screenWidth <= 1044 ? 'left' : 'right'} startAnchor={screenWidth <= 1044 ? 'bottom' : 'right'} gridBreak='10%40' />
-            */}</>}
-            {updateMemory && <>
+                {steps.length > 0 && steps[actualStep].arrows?.logicAdr &&
+                    <Xarrow start={'logic-adr'} end="physic-adr" endAnchor={{position: "left", offset: {y: -10}}}
+                            path={"grid"}/>}
+                {steps.length > 0 && steps[actualStep].arrows?.page &&
+                    <Xarrow start={'logic-adr'} end={`page-${pageToUpdate?.key}`} startAnchor={'left'}
+                            endAnchor={"left"}
+                            path={"grid"} gridBreak='10%25' headShape={rightArrow}/>}
+                {steps.length > 0 && steps[actualStep].arrows?.history &&
+                    <Xarrow start={`historico-${pageToUpdate?.key}`} end='physic-adr'
+                            endAnchor={{position: "left", offset: {y: 15}}}
+                            path={screenWidth <= 1044 ? "grid" : 'smooth'} gridBreak='-10' startAnchor='right'/>}
+                {steps.length > 0 && steps[actualStep].arrows?.physic &&
+                    <Xarrow start='physic-adr' end={`word-${shift}`} path={"grid"} gridBreak='50%70'
+                            endAnchor={{position: "right", offset: {x: 0}}}  headShape={rightArrow}/>}
+            </>}
+            {steps.length > 0 && steps[actualStep].pageFault && <>
                 <Xarrow start={'disc'} end="memory" startAnchor={'top'} color='red'/>
-                <Xarrow start={'disc'} end="p1tb" startAnchor={screenWidth <= 1044 ? 'right' : "left"} path={"grid"}
-                        endAnchor={screenWidth <= 1044 ? 'bottom' : 'right'} color='red'/>
+                <Xarrow start={'disc'} end={`page-${pageToUpdate?.key}`}
+                        startAnchor={screenWidth <= 1044 ? 'right' : "left"} path={"grid"}
+                        endAnchor={{position: "right", offset: {y: 10}}} color='red'/>
             </>}
         </Grid2>
     );
