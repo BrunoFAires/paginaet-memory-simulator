@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/paginated-memory-simulator/static/css/main.49310ae3.css",
-    "main.js": "/paginated-memory-simulator/static/js/main.953b4591.js",
+    "main.css": "/paginated-memory-simulator/static/css/main.3f4c9eac.css",
+    "main.js": "/paginated-memory-simulator/static/js/main.fe66cce7.js",
     "static/js/453.4930fcbe.chunk.js": "/paginated-memory-simulator/static/js/453.4930fcbe.chunk.js",
     "index.html": "/paginated-memory-simulator/index.html",
-    "main.49310ae3.css.map": "/paginated-memory-simulator/static/css/main.49310ae3.css.map",
-    "main.953b4591.js.map": "/paginated-memory-simulator/static/js/main.953b4591.js.map",
+    "main.3f4c9eac.css.map": "/paginated-memory-simulator/static/css/main.3f4c9eac.css.map",
+    "main.fe66cce7.js.map": "/paginated-memory-simulator/static/js/main.fe66cce7.js.map",
     "453.4930fcbe.chunk.js.map": "/paginated-memory-simulator/static/js/453.4930fcbe.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.49310ae3.css",
-    "static/js/main.953b4591.js"
+    "static/css/main.3f4c9eac.css",
+    "static/js/main.fe66cce7.js"
   ]
 }
